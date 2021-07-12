@@ -1,0 +1,28 @@
+- name: configure grr server node
+  hosts: grrnode
+  become: true
+  become_method: sudo
+
+  tasks:
+
+    - name: Ensure directory exists
+      file:
+        path: "{{grr_certdir_path}}"
+        state: directory
+    - name: Generate an OpenSSL private key
+      openssl_privatekey:
+        path: "{{priv_key_path}}"
+
+    - name: Generate an OpenSSL CSR
+      openssl_csr:
+        path: "{{grr_csr_path}}"
+        privatekey_path: "{{priv_key_path}}"
+        common_name: "{{grr_server_name}}"
+
+    - name: Generate a Self Signed OpenSSL certificate
+      openssl_certificate:
+        path: "{{grr_crt_path}}"
+        privatekey_path: "{{priv_key_path}}"
+        csr_path:  "{{grr_csr_path}}"
+        provider: selfsigned
+
