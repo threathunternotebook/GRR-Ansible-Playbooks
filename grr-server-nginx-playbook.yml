@@ -1,4 +1,4 @@
-- name: configure and start nginx frontend
+- name: configure and start nginx frontend for grr server
   hosts: grrnode
   become: true
   become_method: sudo
