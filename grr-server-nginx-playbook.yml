@@ -23,8 +23,8 @@
             server {
                listen                   443 ssl;
                server_name _;
-                  ssl_certificate       "{{grr_cert_path}}";
-                  ssl_certificate_key   /etc/ssl/crt/grr-server.privkey.pem;
+                  ssl_certificate       "{{grr_crt_path}}";
+                  ssl_certificate_key   "{{priv_key_path}}";
                   ssl_protocols         TLSv1.1 TLSv1.2;
                   ssl_ciphers           HIGH:!aNULL:!MD5;
                location / {
