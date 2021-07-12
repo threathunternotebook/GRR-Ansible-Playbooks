@@ -1,0 +1,69 @@
+- name: configure grr server node
+  hosts: grrnode
+  become: true
+  become_method: sudo
+
+  environment:
+     DEBIAN_FRONTEND: noninteractive
+
+  tasks:
+
+       - name: Start up all interfaces
+         shell: 'sudo dhclient'
+
+       - name: Copy grr configuration configuration file
+         copy:
+             src: /home/ansible/ansible/grr-playbooks/files/server.local.yaml
+             dest: /etc/grr/server.local.yaml
+             owner: "{{perm_owner}}"
+             group: "{{perm_group}}"
+             mode: 0644
+
+       - name: Copy netplan yaml file
+         copy:
+             src: /home/ansible/ansible/grr-playbooks/files/01-netcfg.yaml
+             dest: /etc/netplan/01-netcfg.yaml
+             owner: "{{perm_owner}}"
+             group: "{{perm_group}}"
+             mode: 0644
+
+       - name: restart netplan
+         shell: 'netplan apply'
+
+       - name: set max allowed packet
+         mysql_variables:
+             login_user: root
+             login_port: 0
+             check_hostname: no
+             variable: max_allowed_packet
+             value: 41943040
+             mode: global
+       - name: Create grr database
+         mysql_db:
+             check_hostname: no
+             login_user: root
+             login_port: 0
+             name: "{{grr_db_name}}"
+             state: present
+       - name: Add mysql grr user
+         mysql_user:
+             login_user: root
+             login_port: 0
+             check_hostname: no
+             name: "{{grr_db_user}}"
+             password: "{{grr_db_pass}}"
+             priv: "{{grr_db_priv}}"
+             state: present
+
+       - name: run grr installation
+         apt:
+             deb: /root/grr-server_3.4.3-1_amd64.deb
+         environment:
+             DEBIAN_FRONTEND: noninteractive
+
+       - name: add grr server admin account
+         shell: 'sudo grr_config_updater add_user --admin true --password "{{grr_gui_pass}}" "{{grr_gui_uname}}"'
+
+       - name: repack grr clients
+         shell: 'sudo grr_config_updater repack_clients'
+
