@@ -1,0 +1,66 @@
+---
+- name: Create GRR Server VM from ISO
+  hosts: localhost
+  gather_facts: no
+  vars_files: vars/secrets.yml
+  vars_prompt:
+   - name: "esxi_ip" ##IP address of esxi server to deplay grr server virtual machine
+     prompt: "What is the IP address of the ESXi server?"
+     private: no
+   - name: "grr_disk_size" ## Disk Size of GRR Server Node
+     prompt: "What disk size (In GB) do you want for the GRR Server Node VM?"
+     default: 4000
+     private: no
+   - name: "grr_mem_size" ## Memory Size of GRR Server Node
+     prompt: "How much memory (In MB) do you want for the GRR Server Node VM?"
+     default: 32768
+     private: no
+   - name: "grr_cpu_count" ## CPU count of GRR Server Node
+     prompt: "How many CPUs do you want for the GRR Server Node VM?"
+     default: 16
+     private: no
+
+  tasks:
+  - name: Configure grr-server Virtual Machine Resources
+    vmware_guest:
+      hostname: "{{esxi_ip}}"
+      username: "{{esxi_username}}"
+      password: "{{esxi_password}}"
+      validate_certs: False
+      guest_id: "ubuntu64Guest"
+      name: grr-server
+      datacenter: "ha-datacenter"
+      datastore: "{{datastore}}"
+      folder: /
+      state: restarted
+      disk:
+        - size_gb: "{{grr_disk_size}}"
+          type: "thin"
+          datastore: "{{datastore}}"
+      hardware:
+          memory_mb: "{{grr_mem_size}}"
+          num_cpus: "{{grr_cpu_count}}"
+      cdrom:
+          type: iso
+          iso_path: "{{isopath}}"
+      networks:
+        - name: "{{grr_admin_portgroup}}"
+          mac: "{{grr_admin_mac}}"
+          ip: "{{grr_admin_ip}}"
+          netmask: "{{grr_admin_netmask}}"
+          type: static
+          device_type: "vmxnet3"
+          gateway: "{{grr_admin_gateway}}"
+          start_connected: true
+        - name: "{{grr_client_portgroup}}"
+          mac: "{{grr_client_mac}}"
+          ip: "{{grr_client_ip}}"
+          netmask: "{{grr_client_netmask}}"
+          type: static
+          gateway: "{{grr_client_gateway}}"
+          start_connected: true
+      customization:
+          dns_servers:
+             - "{{grr_dns1}}"
+             - "{{grr_dns2}}"
+      wait_for_ip_address: "yes"
