@@ -28,7 +28,7 @@
       password: "{{esxi_password}}"
       validate_certs: False
       guest_id: "ubuntu64Guest"
-      name: grr-server
+      name: "{{grr_esxi_guest_name}}"
       datacenter: "ha-datacenter"
       datastore: "{{datastore}}"
       folder: /
