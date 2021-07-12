@@ -1,0 +1,39 @@
+- name: configure and start nginx frontend
+  hosts: grrnode
+  become: true
+  become_method: sudo
+
+  tasks:
+
+     - name: remove grr nginx config file if it exists
+       file:
+         path: "{{grr_nginx_site_path}}"
+         state: absent
+
+     - name: Create nginx file for grr
+       file:
+         path: "{{grr_nginx_site_path}}"
+         state: touch
+
+     - name: Amend nginx config file
+       blockinfile:
+         path: "{{grr_nginx_site_path}}"
+         marker: ""
+         block: |
+            server {
+               listen                   443 ssl;
+               server_name _;
+                  ssl_certificate       "{{grr_cert_path}}";
+                  ssl_certificate_key   /etc/ssl/crt/grr-server.privkey.pem;
+                  ssl_protocols         TLSv1.1 TLSv1.2;
+                  ssl_ciphers           HIGH:!aNULL:!MD5;
+               location / {
+                  proxy_pass            http://127.0.0.1:8000;
+               }
+            }
+
+     - name: Restart nginx
+       service:
+         name: nginx
+         state: restarted
+         enabled: yes
